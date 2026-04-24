@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { ExternalLink, FileDown, ShieldCheck, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -30,6 +30,7 @@ export default function TaxNomadCalculator() {
     email: '',
     documentType: 'passport',
     taxId: '',
+    reportLanguage: language,
   });
   const summary = useMemo(() => {
     try {
@@ -44,6 +45,10 @@ export default function TaxNomadCalculator() {
   }, [fiscalYear, ranges]);
   const statusLabel =
     summary.status === 'safe' ? t('statusSafe') : summary.status === 'warning' ? t('statusWarning') : t('statusOver');
+
+  useEffect(() => {
+    setUserData((current) => ({ ...current, reportLanguage: language }));
+  }, [language]);
 
   const loadPdfModules = async () => {
     const { generateTaxReport } = await import('@/lib/generatePdf');
@@ -120,7 +125,7 @@ export default function TaxNomadCalculator() {
         documentType: userData.documentType,
         ranges,
         fiscalYear,
-        language,
+        language: userData.reportLanguage,
       });
       window.location.assign(checkoutUrl);
     } catch (error) {

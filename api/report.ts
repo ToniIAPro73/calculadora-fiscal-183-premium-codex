@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateTaxReport } from '../src/lib/generatePdf';
-import { normalizeReportCheckoutPayload, type ReportCheckoutPayload } from '../src/lib/reportPayload';
-import { query } from './_db';
-import { getStripe } from './_stripe';
+import { generatePaidTaxReport } from './_generateTaxReport.js';
+import { normalizeReportCheckoutPayload, type ReportCheckoutPayload } from './_reportPayload.js';
+import { ensureReportOrdersTable, query } from './_db.js';
+import { getStripe } from './_stripe.js';
 
 type ReportOrderRow = {
   id: string;
@@ -34,6 +34,8 @@ export default async function handler(request: VercelRequest, response: VercelRe
       return response.status(402).json({ error: 'Payment has not been confirmed.' });
     }
 
+    await ensureReportOrdersTable();
+
     const result = await query<ReportOrderRow>(
       `select id, payload, stripe_checkout_session_id
        from report_orders
@@ -47,8 +49,15 @@ export default async function handler(request: VercelRequest, response: VercelRe
       return response.status(404).json({ error: 'Paid report order was not found.' });
     }
 
-    const payload = normalizeReportCheckoutPayload(order.payload);
-    const doc = await generateTaxReport({
+    const payload = normalizeReportCheckoutPayload({
+      ...order.payload,
+      language:
+        order.payload.language ??
+        (session.metadata?.document_language === 'en' || session.metadata?.document_language === 'es'
+          ? session.metadata.document_language
+          : undefined),
+    });
+    const doc = await generatePaidTaxReport({
       name: payload.name,
       email: payload.email,
       taxId: payload.taxId,
