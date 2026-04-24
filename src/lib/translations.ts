@@ -60,6 +60,7 @@ export const translations = {
     reportButton: 'Premium report',
     previewButton: 'Preview sample output',
     reportHint: 'PDF export remains deferred until secondary features.',
+    reportRequiresRanges: 'Add at least one period before generating the PDF report.',
     standardsTitle: 'Standards',
     standardsCardOneTitle: 'What this shell already guarantees',
     standardsCardOneBody:
@@ -160,6 +161,7 @@ export const translations = {
     reportButton: 'Informe premium',
     previewButton: 'Vista previa de ejemplo',
     reportHint: 'La exportacion PDF sigue diferida hasta las funciones secundarias.',
+    reportRequiresRanges: 'Anade al menos un periodo antes de generar el informe PDF.',
     standardsTitle: 'Estandares',
     standardsCardOneTitle: 'Lo que esta base ya garantiza',
     standardsCardOneBody:

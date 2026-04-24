@@ -71,6 +71,17 @@ export default function TaxNomadCalculator() {
     setEditingRangeIndex(null);
   };
 
+  const handleOpenReportModal = () => {
+    if (ranges.length === 0) {
+      toast.error(t('reportRequiresRanges'));
+      document.getElementById('range-start')?.focus();
+      document.getElementById('range-start')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    setIsModalOpen(true);
+  };
+
   const handlePreviewSample = async () => {
     const example = buildExampleReportPayload();
 
@@ -269,8 +280,8 @@ export default function TaxNomadCalculator() {
 
                     <div className="space-y-4">
                       <Button
-                        disabled={ranges.length === 0}
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleOpenReportModal}
+                        aria-disabled={ranges.length === 0}
                         className="h-[4.5rem] w-full rounded-[1.6rem] px-6 text-[11px] uppercase tracking-[0.2em] shadow-2xl disabled:opacity-70"
                       >
                         <FileDown className="h-4 w-4" />
