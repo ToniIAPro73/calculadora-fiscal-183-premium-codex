@@ -8,17 +8,35 @@ export const reportOwner = {
   website: 'regla183.com',
 };
 
-export function buildExampleReportPayload() {
+function getDayOfYear(date: Date) {
+  const startOfYear = new Date(date.getFullYear(), 0, 1);
+  return Math.floor((date.getTime() - startOfYear.getTime()) / 86_400_000) + 1;
+}
+
+function buildSampleRange(fiscalYear: number, startDay: number, length: number, maxDay: number) {
+  const safeStartDay = Math.max(1, Math.min(startDay, maxDay));
+  const safeEndDay = Math.max(safeStartDay, Math.min(safeStartDay + length, maxDay));
+
+  return {
+    start: new Date(fiscalYear, 0, safeStartDay),
+    end: new Date(fiscalYear, 0, safeEndDay),
+  };
+}
+
+export function buildExampleReportPayload(fiscalYear = new Date().getFullYear()) {
+  const today = new Date();
+  const maxSampleDay = fiscalYear === today.getFullYear() ? getDayOfYear(today) : 365;
+
   return {
     name: 'Alex Rivera',
     documentType: 'passport',
     taxId: 'X1234567Z',
-    fiscalYear: 2026,
+    fiscalYear,
     ranges: [
-      { start: new Date('2026-01-05'), end: new Date('2026-01-20') },
-      { start: new Date('2026-01-18'), end: new Date('2026-01-28') },
-      { start: new Date('2026-03-02'), end: new Date('2026-03-18') },
-      { start: new Date('2026-08-11'), end: new Date('2026-08-23') },
+      buildSampleRange(fiscalYear, 5, 15, maxSampleDay),
+      buildSampleRange(fiscalYear, 18, 10, maxSampleDay),
+      buildSampleRange(fiscalYear, 61, 16, maxSampleDay),
+      buildSampleRange(fiscalYear, 96, 12, maxSampleDay),
     ] satisfies DateRangeInput[],
     exampleMode: true,
   };

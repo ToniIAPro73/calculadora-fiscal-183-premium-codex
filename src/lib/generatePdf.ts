@@ -113,6 +113,13 @@ export async function generateTaxReport({
   doc.setFontSize(8);
   doc.text(copy.subtitle, margin, 27);
 
+  doc.setFillColor(16, 185, 129);
+  doc.roundedRect(width - margin - 42, 21, 42, 8, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text(`${copy.fiscalYear}: ${reportFiscalYear}`.toUpperCase(), width - margin - 21, 26, { align: 'center' });
+
   if (exampleMode) {
     doc.setFillColor(245, 158, 11);
     doc.roundedRect(width - margin - 28, 10, 28, 8, 2, 2, 'F');
@@ -144,7 +151,7 @@ export async function generateTaxReport({
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
   doc.text(`${copy.generated}: ${generatedAt}`, margin + 5, y + 16);
-  doc.text(`${copy.threshold}: 183 · ${copy.fiscalYear}: ${reportFiscalYear}`, margin + contentWidth / 2, y + 16);
+  doc.text(`${copy.fiscalYear}: ${reportFiscalYear} · ${copy.threshold}: 183`, margin + contentWidth / 2, y + 16);
   y += 34;
 
   const cards = [

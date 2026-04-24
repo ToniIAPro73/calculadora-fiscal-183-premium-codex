@@ -83,7 +83,7 @@ export default function TaxNomadCalculator() {
   };
 
   const handlePreviewSample = async () => {
-    const example = buildExampleReportPayload();
+    const example = buildExampleReportPayload(fiscalYear);
 
     try {
       const { generateTaxReport } = await loadPdfModules();
