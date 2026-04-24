@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/contexts/i18nContext';
+import type { ReportLanguage } from '@/lib/reportPayload';
 import { cn } from '@/lib/utils';
 
 export type ReportUserData = {
@@ -18,6 +19,7 @@ export type ReportUserData = {
   email: string;
   documentType: 'passport' | 'nie';
   taxId: string;
+  reportLanguage: ReportLanguage;
 };
 
 type UserDetailsModalProps = {
@@ -92,6 +94,30 @@ export default function UserDetailsModal({
                         )}
                       >
                         {value === 'passport' ? t('userDetailsPassport') : t('userDetailsNie')}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{t('userDetailsReportLanguage')}</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(['es', 'en'] as const).map((value) => {
+                    const selected = userData.reportLanguage === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setUserData({ ...userData, reportLanguage: value })}
+                        className={cn(
+                          'cursor-pointer rounded-[1.1rem] border px-4 py-3 text-sm font-medium transition-all',
+                          selected
+                            ? 'border-primary/20 bg-primary/10 text-primary'
+                            : 'border-white/8 bg-white/[0.04] text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        {value === 'es' ? t('userDetailsReportSpanish') : t('userDetailsReportEnglish')}
                       </button>
                     );
                   })}

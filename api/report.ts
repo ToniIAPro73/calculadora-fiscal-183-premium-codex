@@ -49,7 +49,14 @@ export default async function handler(request: VercelRequest, response: VercelRe
       return response.status(404).json({ error: 'Paid report order was not found.' });
     }
 
-    const payload = normalizeReportCheckoutPayload(order.payload);
+    const payload = normalizeReportCheckoutPayload({
+      ...order.payload,
+      language:
+        order.payload.language ??
+        (session.metadata?.document_language === 'en' || session.metadata?.document_language === 'es'
+          ? session.metadata.document_language
+          : undefined),
+    });
     const doc = await generatePaidTaxReport({
       name: payload.name,
       email: payload.email,
