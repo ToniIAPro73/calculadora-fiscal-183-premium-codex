@@ -13,6 +13,7 @@ export function buildExampleReportPayload() {
     name: 'Alex Rivera',
     documentType: 'passport',
     taxId: 'X1234567Z',
+    fiscalYear: 2026,
     ranges: [
       { start: new Date('2026-01-05'), end: new Date('2026-01-20') },
       { start: new Date('2026-01-18'), end: new Date('2026-01-28') },

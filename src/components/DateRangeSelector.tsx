@@ -15,6 +15,8 @@ import {
 } from '@/lib/dateRangeMerger';
 
 type DateRangeSelectorProps = {
+  fiscalYear: number;
+  onFiscalYearChange: (year: number) => void;
   ranges: DateRange[];
   editingRangeIndex: number | null;
   onAddRange: (range: DateRange) => void;
@@ -23,6 +25,8 @@ type DateRangeSelectorProps = {
 };
 
 export default function DateRangeSelector({
+  fiscalYear,
+  onFiscalYearChange,
   ranges,
   editingRangeIndex,
   onAddRange,
@@ -30,9 +34,9 @@ export default function DateRangeSelector({
   onCancelEditing,
 }: DateRangeSelectorProps) {
   const { t } = useI18n();
-  const currentYear = new Date().getFullYear();
-  const exerciseStart = useMemo(() => startOfYear(new Date(currentYear, 0, 1)), [currentYear]);
-  const exerciseEnd = useMemo(() => endOfYear(new Date(currentYear, 0, 1)), [currentYear]);
+  const exerciseStart = useMemo(() => startOfYear(new Date(fiscalYear, 0, 1)), [fiscalYear]);
+  const exerciseEnd = useMemo(() => endOfYear(new Date(fiscalYear, 0, 1)), [fiscalYear]);
+  const [fiscalYearInput, setFiscalYearInput] = useState(String(fiscalYear));
   const [startInput, setStartInput] = useState('');
   const [endInput, setEndInput] = useState('');
 
@@ -69,6 +73,10 @@ export default function DateRangeSelector({
     setEndInput(toInputValue(range.end));
   }, [editingRangeIndex, ranges]);
 
+  useEffect(() => {
+    setFiscalYearInput(String(fiscalYear));
+  }, [fiscalYear]);
+
   const resetDraft = () => {
     setStartInput('');
     setEndInput('');
@@ -91,6 +99,17 @@ export default function DateRangeSelector({
   const handleCancelEdit = () => {
     resetDraft();
     onCancelEditing();
+  };
+
+  const handleFiscalYearInputChange = (value: string) => {
+    setFiscalYearInput(value);
+
+    const nextYear = Number(value);
+
+    if (Number.isInteger(nextYear) && nextYear >= 1900 && nextYear <= 2100 && nextYear !== fiscalYear) {
+      resetDraft();
+      onFiscalYearChange(nextYear);
+    }
   };
 
   return (
@@ -122,7 +141,20 @@ export default function DateRangeSelector({
                 <p className="text-lg font-medium text-foreground">{t('selectorModeValue')}</p>
               </div>
             </div>
-            <div className="metric-chip">{t('selectorCurrentYear')}: {currentYear}</div>
+            <div className="space-y-2">
+              <Label htmlFor="fiscal-year" className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                {t('selectorFiscalYear')}
+              </Label>
+              <Input
+                id="fiscal-year"
+                type="number"
+                min={1900}
+                max={2100}
+                value={fiscalYearInput}
+                onChange={(event) => handleFiscalYearInputChange(event.target.value)}
+                className="h-11 rounded-xl border-white/8 bg-white/[0.04]"
+              />
+            </div>
           </div>
         </div>
 

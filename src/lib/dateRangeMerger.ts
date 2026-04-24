@@ -49,16 +49,24 @@ export function normalizeDate(date: DateLike) {
 }
 
 export function calculateRangeDays(start: DateLike, end: DateLike) {
-  return differenceInCalendarDays(normalizeDate(end), normalizeDate(start)) + 1;
+  const normalizedStart = normalizeDate(start);
+  const normalizedEnd = normalizeDate(end);
+
+  if (isBefore(normalizedEnd, normalizedStart)) {
+    throw new Error('Date range end cannot be before start.');
+  }
+
+  return differenceInCalendarDays(normalizedEnd, normalizedStart) + 1;
 }
 
 export function normalizeDateRange(range: DateRangeInput): DateRange {
   const start = normalizeDate(range.start);
   const end = normalizeDate(range.end);
+
   return {
     start,
     end,
-    days: range.days ?? calculateRangeDays(start, end),
+    days: calculateRangeDays(start, end),
   };
 }
 

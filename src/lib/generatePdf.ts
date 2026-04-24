@@ -9,6 +9,7 @@ type GenerateTaxReportParams = {
   taxId: string;
   documentType?: string;
   ranges: DateRangeInput[];
+  fiscalYear?: number;
   language?: 'en' | 'es';
   exampleMode?: boolean;
 };
@@ -29,6 +30,7 @@ const labels = {
     days: 'Days',
     overlap: 'Overlap',
     threshold: 'Threshold',
+    fiscalYear: 'Fiscal year',
     notes:
       'This report is an informational aid. It does not replace formal tax or legal advice and depends on the accuracy of user-provided date ranges.',
     example: 'Example report',
@@ -54,6 +56,7 @@ const labels = {
     days: 'Dias',
     overlap: 'Solape',
     threshold: 'Umbral',
+    fiscalYear: 'Ejercicio fiscal',
     notes:
       'Este informe es una ayuda informativa. No sustituye asesoramiento fiscal o legal formal y depende de la exactitud de los rangos de fechas introducidos.',
     example: 'Informe de ejemplo',
@@ -75,16 +78,19 @@ export async function generateTaxReport({
   taxId,
   documentType = 'passport',
   ranges,
+  fiscalYear,
   language = 'es',
   exampleMode = false,
 }: GenerateTaxReportParams) {
   const copy = labels[language];
   const summary = calculateFiscalSummary(ranges);
+  const reportFiscalYear = fiscalYear ?? summary.mergedRanges[0]?.start.getFullYear() ?? new Date().getFullYear();
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const width = doc.internal.pageSize.getWidth();
   const height = doc.internal.pageSize.getHeight();
   const margin = 18;
   const contentWidth = width - margin * 2;
+  const bottomLimit = height - 24;
   const generatedAt = format(new Date(), 'yyyy-MM-dd HH:mm');
   const rows = summary.annotatedRanges.map((range) => [
     format(range.start, 'yyyy-MM-dd'),
@@ -138,7 +144,7 @@ export async function generateTaxReport({
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
   doc.text(`${copy.generated}: ${generatedAt}`, margin + 5, y + 16);
-  doc.text(`${copy.threshold}: 183`, margin + contentWidth / 2, y + 16);
+  doc.text(`${copy.threshold}: 183 · ${copy.fiscalYear}: ${reportFiscalYear}`, margin + contentWidth / 2, y + 16);
   y += 34;
 
   const cards = [
@@ -172,21 +178,32 @@ export async function generateTaxReport({
 
   const colWidths = [42, 42, 22, 22];
   const headerRow = [copy.from, copy.to, copy.days, copy.overlap];
-  doc.setFillColor(15, 23, 42);
-  doc.roundedRect(margin, y, colWidths.reduce((sum, value) => sum + value, 0), 8, 2, 2, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  let currentX = margin;
-  headerRow.forEach((value, index) => {
-    doc.text(value.toUpperCase(), currentX + 3, y + 5.2);
-    currentX += colWidths[index];
-  });
-  y += 8;
+  const tableWidth = colWidths.reduce((sum, value) => sum + value, 0);
+  const drawTableHeader = (headerY: number) => {
+    doc.setFillColor(15, 23, 42);
+    doc.roundedRect(margin, headerY, tableWidth, 8, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    let currentX = margin;
+    headerRow.forEach((value, index) => {
+      doc.text(value.toUpperCase(), currentX + 3, headerY + 5.2);
+      currentX += colWidths[index];
+    });
+
+    return headerY + 8;
+  };
+
+  y = drawTableHeader(y);
 
   rows.forEach((row, index) => {
+    if (y + 8 > bottomLimit) {
+      doc.addPage();
+      y = drawTableHeader(24);
+    }
+
     const fill = index % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
     doc.setFillColor(fill[0], fill[1], fill[2]);
-    doc.rect(margin, y, colWidths.reduce((sum, value) => sum + value, 0), 8, 'F');
+    doc.rect(margin, y, tableWidth, 8, 'F');
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(8);
     let rowX = margin;
@@ -197,6 +214,11 @@ export async function generateTaxReport({
     y += 8;
   });
 
+  if (y + 28 > bottomLimit) {
+    doc.addPage();
+    y = 24;
+  }
+
   y += 8;
   doc.setDrawColor(226, 232, 240);
   doc.line(margin, y, width - margin, y);
@@ -205,12 +227,14 @@ export async function generateTaxReport({
   doc.setFontSize(8);
   doc.text(copy.notes, margin, y, { maxWidth: contentWidth });
 
+  const footerText = `${reportOwner.name} · ${reportOwner.nif} · ${reportOwner.email} · ${reportOwner.website}`;
+  const pageCount = doc.getNumberOfPages();
   doc.setFontSize(7);
-  doc.text(
-    `${reportOwner.name} · ${reportOwner.nif} · ${reportOwner.email} · ${reportOwner.website}`,
-    margin,
-    height - 10,
-  );
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+    doc.setPage(pageNumber);
+    doc.setTextColor(100, 116, 139);
+    doc.text(footerText, margin, height - 10);
+  }
 
   return doc;
 }

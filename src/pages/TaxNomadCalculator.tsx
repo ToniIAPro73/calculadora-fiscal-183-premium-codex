@@ -12,12 +12,14 @@ import UserDetailsModal, { type ReportUserData } from '@/components/UserDetailsM
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useI18n } from '@/contexts/i18nContext';
+import { recordClientError } from '@/lib/clientTelemetry';
 import { calculateFiscalSummary } from '@/lib/fiscalSummary';
 import type { DateRange } from '@/lib/dateRangeMerger';
 import { buildExampleReportPayload } from '@/lib/reportMetadata';
 
 export default function TaxNomadCalculator() {
   const { t, language } = useI18n();
+  const [fiscalYear, setFiscalYear] = useState(() => new Date().getFullYear());
   const [ranges, setRanges] = useState<DateRange[]>([]);
   const [editingRangeIndex, setEditingRangeIndex] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,7 +29,17 @@ export default function TaxNomadCalculator() {
     documentType: 'passport',
     taxId: '',
   });
-  const summary = useMemo(() => calculateFiscalSummary(ranges), [ranges]);
+  const summary = useMemo(() => {
+    try {
+      return calculateFiscalSummary(ranges);
+    } catch (error) {
+      recordClientError('fiscal_summary_failed', error, {
+        fiscalYear,
+        periodCount: ranges.length,
+      });
+      return calculateFiscalSummary([]);
+    }
+  }, [fiscalYear, ranges]);
   const statusLabel =
     summary.status === 'safe' ? t('statusSafe') : summary.status === 'warning' ? t('statusWarning') : t('statusOver');
 
@@ -53,20 +65,33 @@ export default function TaxNomadCalculator() {
     });
   };
 
+  const handleFiscalYearChange = (year: number) => {
+    setFiscalYear(year);
+    setRanges([]);
+    setEditingRangeIndex(null);
+  };
+
   const handlePreviewSample = async () => {
+    const example = buildExampleReportPayload();
+
     try {
       const { generateTaxReport } = await loadPdfModules();
-      const example = buildExampleReportPayload();
       const doc = await generateTaxReport({
         name: example.name,
         documentType: example.documentType,
         taxId: example.taxId,
         ranges: example.ranges,
+        fiscalYear: example.fiscalYear,
         language,
         exampleMode: true,
       });
       window.open(doc.output('bloburl'), '_blank', 'noopener,noreferrer');
-    } catch {
+    } catch (error) {
+      recordClientError('sample_pdf_generation_failed', error, {
+        fiscalYear: example.fiscalYear,
+        periodCount: example.ranges.length,
+        language,
+      });
       toast.error('Unable to generate the sample PDF preview.');
     }
   };
@@ -80,12 +105,18 @@ export default function TaxNomadCalculator() {
         taxId: userData.taxId,
         documentType: userData.documentType,
         ranges,
+        fiscalYear,
         language,
       });
-      doc.save(`fiscal-183-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+      doc.save(`fiscal-183-report-${fiscalYear}-${new Date().toISOString().slice(0, 10)}.pdf`);
       setIsModalOpen(false);
       toast.success(t('pdfSuccess'));
-    } catch {
+    } catch (error) {
+      recordClientError('pdf_generation_failed', error, {
+        fiscalYear,
+        periodCount: ranges.length,
+        language,
+      });
       toast.error(t('pdfError'));
     } finally {
       setIsGeneratingPdf(false);
@@ -178,6 +209,8 @@ export default function TaxNomadCalculator() {
               </div>
 
               <DateRangeSelector
+                fiscalYear={fiscalYear}
+                onFiscalYearChange={handleFiscalYearChange}
                 ranges={ranges}
                 editingRangeIndex={editingRangeIndex}
                 onAddRange={handleAddRange}
