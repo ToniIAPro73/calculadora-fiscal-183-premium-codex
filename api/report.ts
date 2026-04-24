@@ -50,6 +50,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
     const payload = normalizeReportCheckoutPayload(order.payload);
     const doc = await generateTaxReport({
       name: payload.name,
+      email: payload.email,
       taxId: payload.taxId,
       documentType: payload.documentType,
       ranges: payload.ranges.map((range) => ({ start: range.start, end: range.end })),

@@ -38,6 +38,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'payment',
+      customer_email: payload.email,
       client_reference_id: reportId,
       metadata: {
         report_order_id: reportId,

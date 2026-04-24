@@ -6,6 +6,7 @@ import type { DateRangeInput } from '@/lib/dateRangeMerger';
 
 type GenerateTaxReportParams = {
   name: string;
+  email?: string;
   taxId: string;
   documentType?: string;
   ranges: DateRangeInput[];
@@ -20,6 +21,7 @@ const labels = {
     subtitle: '183-day fiscal monitoring summary',
     generated: 'Generated',
     reportFor: 'Report holder',
+    email: 'Email',
     identifier: 'Identifier',
     trackedDays: 'Tracked unique days',
     remainingDays: 'Remaining to threshold',
@@ -46,6 +48,7 @@ const labels = {
     subtitle: 'Resumen de seguimiento del umbral de 183 dias',
     generated: 'Generado',
     reportFor: 'Titular del informe',
+    email: 'Email',
     identifier: 'Identificacion',
     trackedDays: 'Dias unicos contabilizados',
     remainingDays: 'Restantes hasta el umbral',
@@ -75,6 +78,7 @@ function statusLabel(language: 'en' | 'es', status: 'safe' | 'warning' | 'destru
 
 export async function generateTaxReport({
   name,
+  email,
   taxId,
   documentType = 'passport',
   ranges,
@@ -138,7 +142,7 @@ export async function generateTaxReport({
   y += 6;
 
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(margin, y, contentWidth, 24, 3, 3, 'F');
+  doc.roundedRect(margin, y, contentWidth, 30, 3, 3, 'F');
   doc.setFontSize(9);
   doc.setTextColor(100, 116, 139);
   doc.setFont('helvetica', 'normal');
@@ -152,7 +156,14 @@ export async function generateTaxReport({
   doc.setTextColor(100, 116, 139);
   doc.text(`${copy.generated}: ${generatedAt}`, margin + 5, y + 16);
   doc.text(`${copy.fiscalYear}: ${reportFiscalYear} · ${copy.threshold}: 183`, margin + contentWidth / 2, y + 16);
-  y += 34;
+  if (email) {
+    doc.text(`${copy.email}:`, margin + 5, y + 24);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text(email, margin + 34, y + 24);
+    doc.setFont('helvetica', 'normal');
+  }
+  y += 40;
 
   const cards = [
     [copy.trackedDays, `${summary.totalDays}`],

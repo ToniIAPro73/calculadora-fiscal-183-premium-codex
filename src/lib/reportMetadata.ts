@@ -29,6 +29,7 @@ export function buildExampleReportPayload(fiscalYear = new Date().getFullYear())
 
   return {
     name: 'Alex Rivera',
+    email: 'alex@example.com',
     documentType: 'passport',
     taxId: 'X1234567Z',
     fiscalYear,

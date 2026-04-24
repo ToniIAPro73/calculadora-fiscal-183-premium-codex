@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 
 export type ReportUserData = {
   name: string;
+  email: string;
   documentType: 'passport' | 'nie';
   taxId: string;
 };
@@ -63,6 +64,17 @@ export default function UserDetailsModal({
               </div>
 
               <div className="space-y-2">
+                <Label className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{t('userDetailsEmail')}</Label>
+                <Input
+                  type="email"
+                  value={userData.email}
+                  onChange={(event) => setUserData({ ...userData, email: event.target.value })}
+                  className="h-12 rounded-xl border-white/8 bg-white/[0.04]"
+                  placeholder="alex@example.com"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{t('userDetailsDocumentType')}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {(['passport', 'nie'] as const).map((value) => {
@@ -100,7 +112,7 @@ export default function UserDetailsModal({
             <DialogFooter className="flex-col gap-3 sm:flex-col">
               <Button
                 onClick={onConfirm}
-                disabled={isLoading || !userData.name.trim() || !userData.taxId.trim()}
+                disabled={isLoading || !userData.name.trim() || !userData.email.trim() || !userData.taxId.trim()}
                 className="h-12 w-full rounded-full text-[11px] uppercase tracking-[0.2em]"
               >
                 <LockKeyhole className="h-4 w-4" />

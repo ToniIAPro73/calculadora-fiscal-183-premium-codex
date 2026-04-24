@@ -3,6 +3,7 @@ import type { ReportDocumentType, ReportLanguage } from '@/lib/reportPayload';
 
 export async function createCheckoutSession(params: {
   name: string;
+  email: string;
   documentType: ReportDocumentType;
   taxId: string;
   fiscalYear: number;
@@ -14,6 +15,7 @@ export async function createCheckoutSession(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: params.name,
+      email: params.email,
       documentType: params.documentType,
       taxId: params.taxId,
       fiscalYear: params.fiscalYear,

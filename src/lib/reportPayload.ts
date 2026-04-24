@@ -8,6 +8,7 @@ export type SerializedReportRange = {
 
 export type ReportCheckoutPayload = {
   name: string;
+  email: string;
   documentType: ReportDocumentType;
   taxId: string;
   fiscalYear: number;
@@ -44,6 +45,7 @@ export function normalizeReportCheckoutPayload(input: unknown, today = new Date(
   }
 
   const name = typeof input.name === 'string' ? input.name.trim() : '';
+  const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
   const taxId = typeof input.taxId === 'string' ? input.taxId.trim() : '';
   const documentType = input.documentType === 'nie' ? 'nie' : input.documentType === 'passport' ? 'passport' : null;
   const language = input.language === 'en' ? 'en' : input.language === 'es' ? 'es' : null;
@@ -51,6 +53,9 @@ export function normalizeReportCheckoutPayload(input: unknown, today = new Date(
 
   if (name.length < 2 || name.length > 140) {
     throw new Error('Report holder name is required.');
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    throw new Error('A valid email address is required.');
   }
   if (taxId.length < 2 || taxId.length > 64) {
     throw new Error('Document number is required.');
@@ -94,6 +99,7 @@ export function normalizeReportCheckoutPayload(input: unknown, today = new Date(
 
   return {
     name,
+    email,
     documentType,
     taxId,
     fiscalYear,

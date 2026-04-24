@@ -27,6 +27,7 @@ export default function TaxNomadCalculator() {
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [userData, setUserData] = useState<ReportUserData>({
     name: '',
+    email: '',
     documentType: 'passport',
     taxId: '',
   });
@@ -90,6 +91,7 @@ export default function TaxNomadCalculator() {
       const { generateTaxReport } = await loadPdfModules();
       const doc = await generateTaxReport({
         name: example.name,
+        email: example.email,
         documentType: example.documentType,
         taxId: example.taxId,
         ranges: example.ranges,
@@ -113,6 +115,7 @@ export default function TaxNomadCalculator() {
       setIsStartingCheckout(true);
       const checkoutUrl = await createCheckoutSession({
         name: userData.name,
+        email: userData.email,
         taxId: userData.taxId,
         documentType: userData.documentType,
         ranges,

@@ -9,6 +9,7 @@ describe('normalizeReportCheckoutPayload', () => {
       normalizeReportCheckoutPayload(
         {
           name: ' Alex Rivera ',
+          email: ' Alex@Example.COM ',
           documentType: 'passport',
           taxId: ' X1234567Z ',
           fiscalYear: 2026,
@@ -19,6 +20,7 @@ describe('normalizeReportCheckoutPayload', () => {
       ),
     ).toEqual({
       name: 'Alex Rivera',
+      email: 'alex@example.com',
       documentType: 'passport',
       taxId: 'X1234567Z',
       fiscalYear: 2026,
@@ -32,6 +34,7 @@ describe('normalizeReportCheckoutPayload', () => {
       normalizeReportCheckoutPayload(
         {
           name: 'Alex Rivera',
+          email: 'alex@example.com',
           documentType: 'nie',
           taxId: 'X1234567Z',
           fiscalYear: 2026,
@@ -46,6 +49,7 @@ describe('normalizeReportCheckoutPayload', () => {
       normalizeReportCheckoutPayload(
         {
           name: 'Alex Rivera',
+          email: 'alex@example.com',
           documentType: 'nie',
           taxId: 'X1234567Z',
           fiscalYear: 2026,
@@ -55,5 +59,22 @@ describe('normalizeReportCheckoutPayload', () => {
         today,
       ),
     ).toThrow('Date ranges must stay inside the selected fiscal year.');
+  });
+
+  it('rejects missing or malformed email addresses', () => {
+    expect(() =>
+      normalizeReportCheckoutPayload(
+        {
+          name: 'Alex Rivera',
+          email: 'not-an-email',
+          documentType: 'passport',
+          taxId: 'X1234567Z',
+          fiscalYear: 2026,
+          language: 'es',
+          ranges: [{ start: '2026-04-01', end: '2026-04-10' }],
+        },
+        today,
+      ),
+    ).toThrow('A valid email address is required.');
   });
 });

@@ -18,6 +18,7 @@ describe('generateTaxReport', () => {
   it('adds pages when declared periods exceed the first-page table capacity', async () => {
     const doc = await generateTaxReport({
       name: 'Alex Rivera',
+      email: 'alex@example.com',
       taxId: 'X1234567Z',
       ranges: buildManyShortRanges(45),
       fiscalYear: 2026,
@@ -30,6 +31,7 @@ describe('generateTaxReport', () => {
   it('renders the selected fiscal year and language-specific labels', async () => {
     const doc = await generateTaxReport({
       name: 'Alex Rivera',
+      email: 'alex@example.com',
       taxId: 'X1234567Z',
       ranges: [
         { start: new Date(2025, 0, 1), end: new Date(2025, 0, 1) },
@@ -41,6 +43,7 @@ describe('generateTaxReport', () => {
     const output = doc.output();
 
     expect(output).toContain('Ejercicio fiscal: 2025');
+    expect(output).toContain('alex@example.com');
     expect(output).toContain('Informe de Presencia para Residencia Fiscal');
     expect(output).toContain('PERIODOS DECLARADOS');
   });
