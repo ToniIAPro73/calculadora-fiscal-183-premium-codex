@@ -188,6 +188,18 @@ describe('dateRangeMerger', () => {
 
     expect(
       validateDateRangeDraft({
+        draftStart: new Date('2026-06-08'),
+        draftEnd: new Date('2026-06-10'),
+        hasInput: true,
+        exerciseStart: new Date('2026-01-01'),
+        exerciseEnd: new Date('2026-12-31'),
+        maxAllowedDate: new Date('2026-06-09'),
+        occupiedDayKeys: occupied,
+      }).code,
+    ).toBe('future_date');
+
+    expect(
+      validateDateRangeDraft({
         draftStart: new Date('2026-06-04'),
         draftEnd: new Date('2026-06-06'),
         hasInput: true,

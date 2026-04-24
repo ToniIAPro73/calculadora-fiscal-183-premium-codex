@@ -6,6 +6,7 @@ import type { DateRangeInput } from '@/lib/dateRangeMerger';
 
 type GenerateTaxReportParams = {
   name: string;
+  email?: string;
   taxId: string;
   documentType?: string;
   ranges: DateRangeInput[];
@@ -20,6 +21,7 @@ const labels = {
     subtitle: '183-day fiscal monitoring summary',
     generated: 'Generated',
     reportFor: 'Report holder',
+    email: 'Email',
     identifier: 'Identifier',
     trackedDays: 'Tracked unique days',
     remainingDays: 'Remaining to threshold',
@@ -46,6 +48,7 @@ const labels = {
     subtitle: 'Resumen de seguimiento del umbral de 183 dias',
     generated: 'Generado',
     reportFor: 'Titular del informe',
+    email: 'Email',
     identifier: 'Identificacion',
     trackedDays: 'Dias unicos contabilizados',
     remainingDays: 'Restantes hasta el umbral',
@@ -75,6 +78,7 @@ function statusLabel(language: 'en' | 'es', status: 'safe' | 'warning' | 'destru
 
 export async function generateTaxReport({
   name,
+  email,
   taxId,
   documentType = 'passport',
   ranges,
@@ -113,6 +117,13 @@ export async function generateTaxReport({
   doc.setFontSize(8);
   doc.text(copy.subtitle, margin, 27);
 
+  doc.setFillColor(16, 185, 129);
+  doc.roundedRect(width - margin - 42, 21, 42, 8, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text(`${copy.fiscalYear}: ${reportFiscalYear}`.toUpperCase(), width - margin - 21, 26, { align: 'center' });
+
   if (exampleMode) {
     doc.setFillColor(245, 158, 11);
     doc.roundedRect(width - margin - 28, 10, 28, 8, 2, 2, 'F');
@@ -131,7 +142,7 @@ export async function generateTaxReport({
   y += 6;
 
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(margin, y, contentWidth, 24, 3, 3, 'F');
+  doc.roundedRect(margin, y, contentWidth, 30, 3, 3, 'F');
   doc.setFontSize(9);
   doc.setTextColor(100, 116, 139);
   doc.setFont('helvetica', 'normal');
@@ -144,8 +155,15 @@ export async function generateTaxReport({
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
   doc.text(`${copy.generated}: ${generatedAt}`, margin + 5, y + 16);
-  doc.text(`${copy.threshold}: 183 · ${copy.fiscalYear}: ${reportFiscalYear}`, margin + contentWidth / 2, y + 16);
-  y += 34;
+  doc.text(`${copy.fiscalYear}: ${reportFiscalYear} · ${copy.threshold}: 183`, margin + contentWidth / 2, y + 16);
+  if (email) {
+    doc.text(`${copy.email}:`, margin + 5, y + 24);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text(email, margin + 34, y + 24);
+    doc.setFont('helvetica', 'normal');
+  }
+  y += 40;
 
   const cards = [
     [copy.trackedDays, `${summary.totalDays}`],

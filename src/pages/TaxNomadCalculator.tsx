@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useI18n } from '@/contexts/i18nContext';
 import { recordClientError } from '@/lib/clientTelemetry';
+import { createCheckoutSession } from '@/lib/checkout';
 import { calculateFiscalSummary } from '@/lib/fiscalSummary';
 import type { DateRange } from '@/lib/dateRangeMerger';
 import { buildExampleReportPayload } from '@/lib/reportMetadata';
@@ -23,9 +24,10 @@ export default function TaxNomadCalculator() {
   const [ranges, setRanges] = useState<DateRange[]>([]);
   const [editingRangeIndex, setEditingRangeIndex] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [userData, setUserData] = useState<ReportUserData>({
     name: '',
+    email: '',
     documentType: 'passport',
     taxId: '',
   });
@@ -71,13 +73,25 @@ export default function TaxNomadCalculator() {
     setEditingRangeIndex(null);
   };
 
+  const handleOpenReportModal = () => {
+    if (ranges.length === 0) {
+      toast.error(t('reportRequiresRanges'));
+      document.getElementById('range-start')?.focus();
+      document.getElementById('range-start')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    setIsModalOpen(true);
+  };
+
   const handlePreviewSample = async () => {
-    const example = buildExampleReportPayload();
+    const example = buildExampleReportPayload(fiscalYear);
 
     try {
       const { generateTaxReport } = await loadPdfModules();
       const doc = await generateTaxReport({
         name: example.name,
+        email: example.email,
         documentType: example.documentType,
         taxId: example.taxId,
         ranges: example.ranges,
@@ -98,28 +112,27 @@ export default function TaxNomadCalculator() {
 
   const handleGeneratePdf = async () => {
     try {
-      setIsGeneratingPdf(true);
-      const { generateTaxReport } = await loadPdfModules();
-      const doc = await generateTaxReport({
+      setIsStartingCheckout(true);
+      const checkoutUrl = await createCheckoutSession({
         name: userData.name,
+        email: userData.email,
         taxId: userData.taxId,
         documentType: userData.documentType,
         ranges,
         fiscalYear,
         language,
       });
-      doc.save(`fiscal-183-report-${fiscalYear}-${new Date().toISOString().slice(0, 10)}.pdf`);
-      setIsModalOpen(false);
-      toast.success(t('pdfSuccess'));
+      window.location.assign(checkoutUrl);
     } catch (error) {
-      recordClientError('pdf_generation_failed', error, {
+      recordClientError('checkout_session_failed', error, {
         fiscalYear,
         periodCount: ranges.length,
         language,
       });
-      toast.error(t('pdfError'));
+      toast.error(t('checkoutError'));
+      setIsStartingCheckout(false);
     } finally {
-      setIsGeneratingPdf(false);
+      setIsModalOpen(false);
     }
   };
 
@@ -150,7 +163,7 @@ export default function TaxNomadCalculator() {
         setUserData={setUserData}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleGeneratePdf}
-        isLoading={isGeneratingPdf}
+        isLoading={isStartingCheckout}
       />
 
       <main id="main-content" className="flex-1">
@@ -269,8 +282,8 @@ export default function TaxNomadCalculator() {
 
                     <div className="space-y-4">
                       <Button
-                        disabled={ranges.length === 0}
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleOpenReportModal}
+                        aria-disabled={ranges.length === 0}
                         className="h-[4.5rem] w-full rounded-[1.6rem] px-6 text-[11px] uppercase tracking-[0.2em] shadow-2xl disabled:opacity-70"
                       >
                         <FileDown className="h-4 w-4" />
