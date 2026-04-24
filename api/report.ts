@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { generatePaidTaxReport } from './_generateTaxReport.js';
 import { normalizeReportCheckoutPayload, type ReportCheckoutPayload } from './_reportPayload.js';
-import { query } from './_db.js';
+import { ensureReportOrdersTable, query } from './_db.js';
 import { getStripe } from './_stripe.js';
 
 type ReportOrderRow = {
@@ -33,6 +33,8 @@ export default async function handler(request: VercelRequest, response: VercelRe
     if (session.payment_status !== 'paid') {
       return response.status(402).json({ error: 'Payment has not been confirmed.' });
     }
+
+    await ensureReportOrdersTable();
 
     const result = await query<ReportOrderRow>(
       `select id, payload, stripe_checkout_session_id

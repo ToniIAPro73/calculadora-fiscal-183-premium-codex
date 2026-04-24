@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { normalizeReportCheckoutPayload } from './_reportPayload.js';
-import { query } from './_db.js';
+import { ensureReportOrdersTable, query } from './_db.js';
 import { getAppUrl, getStripe } from './_stripe.js';
 
 function getRequestBody(request: VercelRequest) {
@@ -26,8 +26,10 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
     const payload = normalizeReportCheckoutPayload(getRequestBody(request));
     const reportId = randomUUID();
-    const appUrl = getAppUrl();
+    const appUrl = getAppUrl(request);
     const stripe = getStripe();
+
+    await ensureReportOrdersTable();
 
     await query(
       `insert into report_orders (id, status, payload)

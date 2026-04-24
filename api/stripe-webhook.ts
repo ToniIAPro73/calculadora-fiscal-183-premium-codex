@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { buffer } from 'node:stream/consumers';
-import { query } from './_db.js';
+import { ensureReportOrdersTable, query } from './_db.js';
 import { getStripe } from './_stripe.js';
 
 export const config = {
@@ -34,6 +34,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
       const session = event.data.object;
 
       if (session.client_reference_id && session.payment_status === 'paid') {
+        await ensureReportOrdersTable();
         await query(
           `update report_orders
            set status = 'paid',
