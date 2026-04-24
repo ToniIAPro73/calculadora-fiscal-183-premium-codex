@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { endOfYear, format, startOfYear } from 'date-fns';
+import { endOfYear, format, min as minDate, startOfDay, startOfYear } from 'date-fns';
 import { CalendarDays, CalendarRange, PencilLine, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +36,8 @@ export default function DateRangeSelector({
   const { t } = useI18n();
   const exerciseStart = useMemo(() => startOfYear(new Date(fiscalYear, 0, 1)), [fiscalYear]);
   const exerciseEnd = useMemo(() => endOfYear(new Date(fiscalYear, 0, 1)), [fiscalYear]);
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const selectableExerciseEnd = useMemo(() => minDate([exerciseEnd, today]), [exerciseEnd, today]);
   const [fiscalYearInput, setFiscalYearInput] = useState(String(fiscalYear));
   const [startInput, setStartInput] = useState('');
   const [endInput, setEndInput] = useState('');
@@ -53,9 +55,10 @@ export default function DateRangeSelector({
         hasInput,
         exerciseStart,
         exerciseEnd,
+        maxAllowedDate: today,
         occupiedDayKeys,
       }),
-    [draftStart, draftEnd, hasInput, exerciseStart, exerciseEnd, occupiedDayKeys],
+    [draftStart, draftEnd, hasInput, exerciseStart, exerciseEnd, today, occupiedDayKeys],
   );
 
   const validationMessage = validation.code ? t(validationCodeToKey[validation.code]) : null;
@@ -106,7 +109,7 @@ export default function DateRangeSelector({
 
     const nextYear = Number(value);
 
-    if (Number.isInteger(nextYear) && nextYear >= 1900 && nextYear <= 2100 && nextYear !== fiscalYear) {
+    if (Number.isInteger(nextYear) && nextYear >= 1900 && nextYear <= today.getFullYear() && nextYear !== fiscalYear) {
       resetDraft();
       onFiscalYearChange(nextYear);
     }
@@ -149,7 +152,7 @@ export default function DateRangeSelector({
                 id="fiscal-year"
                 type="number"
                 min={1900}
-                max={2100}
+                max={today.getFullYear()}
                 value={fiscalYearInput}
                 onChange={(event) => handleFiscalYearInputChange(event.target.value)}
                 className="h-11 rounded-xl border-white/8 bg-white/[0.04]"
@@ -171,11 +174,11 @@ export default function DateRangeSelector({
                   id="range-start"
                   type="date"
                   min={format(exerciseStart, 'yyyy-MM-dd')}
-                  max={format(exerciseEnd, 'yyyy-MM-dd')}
+                  max={format(selectableExerciseEnd, 'yyyy-MM-dd')}
                   value={startInput.replace(/\//g, '-')}
                   onChange={(event) => setStartInput(event.target.value.replace(/-/g, '/'))}
                   className="h-12 rounded-xl border-white/8 bg-white/[0.04]"
-                  aria-invalid={validation.code === 'missing_start' || validation.code === 'outside_exercise' || validation.code === 'invalid_order' || validation.code === 'overlap'}
+                  aria-invalid={validation.code === 'missing_start' || validation.code === 'outside_exercise' || validation.code === 'future_date' || validation.code === 'invalid_order' || validation.code === 'overlap'}
                 />
                 <p className="text-xs text-muted-foreground">
                   {draftStart ? format(draftStart, 'dd MMM yyyy') : t('validationMissingStart')}
@@ -187,11 +190,11 @@ export default function DateRangeSelector({
                   id="range-end"
                   type="date"
                   min={format(exerciseStart, 'yyyy-MM-dd')}
-                  max={format(exerciseEnd, 'yyyy-MM-dd')}
+                  max={format(selectableExerciseEnd, 'yyyy-MM-dd')}
                   value={endInput.replace(/\//g, '-')}
                   onChange={(event) => setEndInput(event.target.value.replace(/-/g, '/'))}
                   className="h-12 rounded-xl border-white/8 bg-white/[0.04]"
-                  aria-invalid={validation.code === 'missing_end' || validation.code === 'outside_exercise' || validation.code === 'invalid_order' || validation.code === 'overlap'}
+                  aria-invalid={validation.code === 'missing_end' || validation.code === 'outside_exercise' || validation.code === 'future_date' || validation.code === 'invalid_order' || validation.code === 'overlap'}
                 />
                 <p className="text-xs text-muted-foreground">
                   {draftEnd ? format(draftEnd, 'dd MMM yyyy') : t('validationMissingEnd')}
@@ -235,6 +238,7 @@ const validationCodeToKey = {
   missing_start: 'validationMissingStart',
   missing_end: 'validationMissingEnd',
   outside_exercise: 'validationOutsideExercise',
+  future_date: 'validationFutureDate',
   invalid_order: 'validationOrder',
   overlap: 'validationOverlap',
 } as const;

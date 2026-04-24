@@ -32,6 +32,7 @@ export type DateRangeValidationCode =
   | 'missing_start'
   | 'missing_end'
   | 'outside_exercise'
+  | 'future_date'
   | 'invalid_order'
   | 'overlap';
 
@@ -129,9 +130,10 @@ export function validateDateRangeDraft(params: {
   hasInput?: boolean;
   exerciseStart: DateLike;
   exerciseEnd: DateLike;
+  maxAllowedDate?: DateLike;
   occupiedDayKeys: ReadonlySet<string>;
 }): DateRangeValidationResult {
-  const { draftStart, draftEnd, hasInput = true, exerciseStart, exerciseEnd, occupiedDayKeys } = params;
+  const { draftStart, draftEnd, hasInput = true, exerciseStart, exerciseEnd, maxAllowedDate, occupiedDayKeys } = params;
 
   if (!hasInput && !draftStart && !draftEnd) {
     return { valid: true, code: null };
@@ -144,6 +146,9 @@ export function validateDateRangeDraft(params: {
   }
   if (isOutsideExercise(draftStart, exerciseStart, exerciseEnd) || isOutsideExercise(draftEnd, exerciseStart, exerciseEnd)) {
     return { valid: false, code: 'outside_exercise' };
+  }
+  if (maxAllowedDate && (isAfter(normalizeDate(draftStart), normalizeDate(maxAllowedDate)) || isAfter(normalizeDate(draftEnd), normalizeDate(maxAllowedDate)))) {
+    return { valid: false, code: 'future_date' };
   }
   if (isBefore(normalizeDate(draftEnd), normalizeDate(draftStart))) {
     return { valid: false, code: 'invalid_order' };
