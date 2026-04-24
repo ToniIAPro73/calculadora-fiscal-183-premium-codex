@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { normalizeReportCheckoutPayload } from '../src/lib/reportPayload';
-import { query } from './_db';
-import { getAppUrl, getStripe } from './_stripe';
+import { normalizeReportCheckoutPayload } from './_reportPayload.js';
+import { query } from './_db.js';
+import { getAppUrl, getStripe } from './_stripe.js';
 
 function getRequestBody(request: VercelRequest) {
   if (typeof request.body === 'string') {

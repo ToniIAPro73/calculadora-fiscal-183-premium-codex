@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateTaxReport } from '../src/lib/generatePdf';
-import { normalizeReportCheckoutPayload, type ReportCheckoutPayload } from '../src/lib/reportPayload';
-import { query } from './_db';
-import { getStripe } from './_stripe';
+import { generatePaidTaxReport } from './_generateTaxReport.js';
+import { normalizeReportCheckoutPayload, type ReportCheckoutPayload } from './_reportPayload.js';
+import { query } from './_db.js';
+import { getStripe } from './_stripe.js';
 
 type ReportOrderRow = {
   id: string;
@@ -48,7 +48,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
     }
 
     const payload = normalizeReportCheckoutPayload(order.payload);
-    const doc = await generateTaxReport({
+    const doc = await generatePaidTaxReport({
       name: payload.name,
       email: payload.email,
       taxId: payload.taxId,

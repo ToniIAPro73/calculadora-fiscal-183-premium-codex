@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { buffer } from 'node:stream/consumers';
-import { query } from './_db';
-import { getStripe } from './_stripe';
+import { query } from './_db.js';
+import { getStripe } from './_stripe.js';
 
 export const config = {
   api: {
